@@ -18,5 +18,3 @@ endif()
 
 include(build/conan.cmake)
 conan_cmake_run(REQUIRES gtest/1.12.1 BASIC_SETUP CMAKE_TARGETS)
-
-add_subdirectory(src/hello_world)
