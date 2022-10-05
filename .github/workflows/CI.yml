@@ -22,3 +22,8 @@ jobs:
         uses: actions/checkout@v3
       - name: Build docker images
         run: docker build -t local -f .devcontainer/Dockerfile .
+      # - name: Login to conan
+      # - name: Create conan packages
+      #   run: conan create . 1.12.1@gtest/stable
+      # - name: Upload conan packages
+      #   run: conan upload "*" --all -r=default-conan-local -c
