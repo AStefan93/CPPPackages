@@ -24,7 +24,7 @@ class GTestConan(ConanFile):
         "build_gmock": [True, False],
         "no_main": [True, False],
         "hide_symbols": [True, False],
-        "debug_postfix": ["ANY", "deprecated"], # option that no longer exist
+        "debug_postfix": ["ANY", "deprecated"],  # option that no longer exist
     }
     default_options = {
         "shared": False,
@@ -32,7 +32,7 @@ class GTestConan(ConanFile):
         "build_gmock": True,
         "no_main": False,
         "hide_symbols": False,
-        "debug_postfix": "deprecated", # option that no longer exist
+        "debug_postfix": "deprecated",  # option that no longer exist
     }
 
     @property
@@ -70,8 +70,8 @@ class GTestConan(ConanFile):
         cmake_layout(self, src_folder="src")
 
     def package_id(self):
-        del self.info.options.no_main # Only used to expose more targets
-        del self.info.options.debug_postfix # deprecated option that no longer exist
+        del self.info.options.no_main  # Only used to expose more targets
+        del self.info.options.debug_postfix  # deprecated option that no longer exist
 
     def validate(self):
         if self.info.options.shared and (is_msvc(self) or self._is_clang_cl) and is_msvc_static_runtime(self):
@@ -97,16 +97,19 @@ class GTestConan(ConanFile):
             )
 
     def source(self):
-        get(self, **self.conan_data["sources"][self.version], destination=self.source_folder, strip_root=True)
+        get(self, **self.conan_data["sources"][self.version],
+            destination=self.source_folder, strip_root=True)
 
     def generate(self):
         tc = CMakeToolchain(self)
         # Honor BUILD_SHARED_LIBS from conan_toolchain (see https://github.com/conan-io/conan/issues/11840)
         tc.cache_variables["CMAKE_POLICY_DEFAULT_CMP0077"] = "NEW"
         tc.variables["BUILD_GMOCK"] = bool(self.options.build_gmock)
-        tc.variables["gtest_hide_internal_symbols"] = bool(self.options.hide_symbols)
+        tc.variables["gtest_hide_internal_symbols"] = bool(
+            self.options.hide_symbols)
         if is_msvc(self) or self._is_clang_cl:
-            tc.variables["gtest_force_shared_crt"] = not is_msvc_static_runtime(self)
+            tc.variables["gtest_force_shared_crt"] = not is_msvc_static_runtime(
+                self)
         if self.settings.os == "Windows" and self.settings.compiler == "gcc":
             tc.variables["gtest_disable_pthreads"] = True
         tc.generate()
@@ -115,7 +118,7 @@ class GTestConan(ConanFile):
         if is_msvc(self) or self._is_clang_cl:
             # No warnings as errors
             replace_in_file(self, os.path.join(self.source_folder, "googletest",
-                                        "cmake", "internal_utils.cmake"), "-WX", "")
+                                               "cmake", "internal_utils.cmake"), "-WX", "")
 
     def build(self):
         self._patch_sources()
@@ -124,7 +127,8 @@ class GTestConan(ConanFile):
         cmake.build()
 
     def package(self):
-        copy(self, "LICENSE", self.source_folder, os.path.join(self.package_folder, "licenses"))
+        copy(self, "LICENSE", self.source_folder,
+             os.path.join(self.package_folder, "licenses"))
         cmake = CMake(self)
         cmake.install()
         rmdir(self, os.path.join(self.package_folder, "lib", "pkgconfig"))
@@ -136,9 +140,12 @@ class GTestConan(ConanFile):
         self.cpp_info.set_property("cmake_file_name", "GTest")
 
         # gtest
-        self.cpp_info.components["libgtest"].set_property("cmake_target_name", "GTest::gtest")
-        self.cpp_info.components["libgtest"].set_property("cmake_target_aliases", ["GTest::GTest"])
-        self.cpp_info.components["libgtest"].set_property("pkg_config_name", "gtest")
+        self.cpp_info.components["libgtest"].set_property(
+            "cmake_target_name", "GTest::gtest")
+        self.cpp_info.components["libgtest"].set_property(
+            "cmake_target_aliases", ["GTest::GTest"])
+        self.cpp_info.components["libgtest"].set_property(
+            "pkg_config_name", "gtest")
         self.cpp_info.components["libgtest"].libs = ["gtest"]
         if self.settings.os in ["Linux", "FreeBSD"]:
             self.cpp_info.components["libgtest"].system_libs.append("m")
@@ -146,27 +153,35 @@ class GTestConan(ConanFile):
         if self.settings.os == "Neutrino" and self.settings.os.version == "7.1":
             self.cpp_info.components["libgtest"].system_libs.append("regex")
         if self.options.shared:
-            self.cpp_info.components["libgtest"].defines.append("GTEST_LINKED_AS_SHARED_LIBRARY=1")
+            self.cpp_info.components["libgtest"].defines.append(
+                "GTEST_LINKED_AS_SHARED_LIBRARY=1")
 
         # gtest_main
         if not self.options.no_main:
-            self.cpp_info.components["gtest_main"].set_property("cmake_target_name", "GTest::gtest_main")
-            self.cpp_info.components["gtest_main"].set_property("cmake_target_aliases", ["GTest::Main"])
-            self.cpp_info.components["gtest_main"].set_property("pkg_config_name", "gtest_main")
+            self.cpp_info.components["gtest_main"].set_property(
+                "cmake_target_name", "GTest::gtest_main")
+            self.cpp_info.components["gtest_main"].set_property(
+                "cmake_target_aliases", ["GTest::Main"])
+            self.cpp_info.components["gtest_main"].set_property(
+                "pkg_config_name", "gtest_main")
             self.cpp_info.components["gtest_main"].libs = ["gtest_main"]
             self.cpp_info.components["gtest_main"].requires = ["libgtest"]
 
         # gmock
         if self.options.build_gmock:
-            self.cpp_info.components["gmock"].set_property("cmake_target_name", "GTest::gmock")
-            self.cpp_info.components["gmock"].set_property("pkg_config_name", "gmock")
+            self.cpp_info.components["gmock"].set_property(
+                "cmake_target_name", "GTest::gmock")
+            self.cpp_info.components["gmock"].set_property(
+                "pkg_config_name", "gmock")
             self.cpp_info.components["gmock"].libs = ["gmock"]
             self.cpp_info.components["gmock"].requires = ["libgtest"]
 
             # gmock_main
             if not self.options.no_main:
-                self.cpp_info.components["gmock_main"].set_property("cmake_target_name", "GTest::gmock_main")
-                self.cpp_info.components["gmock_main"].set_property("pkg_config_name", "gmock_main")
+                self.cpp_info.components["gmock_main"].set_property(
+                    "cmake_target_name", "GTest::gmock_main")
+                self.cpp_info.components["gmock_main"].set_property(
+                    "pkg_config_name", "gmock_main")
                 self.cpp_info.components["gmock_main"].libs = ["gmock_main"]
                 self.cpp_info.components["gmock_main"].requires = ["gmock"]
 
